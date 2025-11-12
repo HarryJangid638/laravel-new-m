@@ -3,6 +3,8 @@ namespace App\Http\Controllers\Admin;
 use Throwable;
 use App\Models\Category;
 use Illuminate\Http\Request;
+use App\Http\Requests\StoreCategoryRequest;
+use App\Http\Requests\UpdateCategoryRequest;
 use App\Traits\HandlesException;
 use App\Traits\JsonResponseTrait;
 use App\Http\Controllers\Controller;
@@ -57,21 +59,11 @@ class CategoryController extends Controller
         }
     }
 
-    public function store(Request $request)
+    public function store(StoreCategoryRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255|unique:categories,name',
-            'description' => 'nullable|string|max:255',
-            // Add other fields and rules as needed
-        ]);
-
-        if ($validator->fails()) {
-            return self::validationError($validator->errors()->toArray());
-        }
-
         try
         {
-            $validated = $validator->validated();
+            $validated = $request->validated();
             $validated['status'] = $request->status ?? 0;
             $validated['parent_id'] = 0;
             $category = Category::create($validated);
@@ -102,22 +94,12 @@ class CategoryController extends Controller
         }
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateCategoryRequest $request, $id)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255|unique:categories,name,' . $id,
-            'description' => 'nullable|string|max:255',
-            // Add other fields and rules as needed
-        ]);
-
-        if ($validator->fails()) {
-            return self::validationError($validator->errors()->toArray());
-        }
-
         try
         {
             $category = Category::findOrFail($id);
-            $validated = $validator->validated();
+            $validated = $request->validated();
             $validated['status'] = $request->status ?? 0;
             $validated['parent_id'] = 0;
             $category->update($validated);

@@ -22,6 +22,7 @@ class CategoryDataTable extends DataTable
     public function dataTable(QueryBuilder $query): EloquentDataTable
     {
         return (new EloquentDataTable($query))
+            ->addIndexColumn()
             ->addColumn('action', function ($category)
             {
                 return view('admin.categories.partials.action', compact('category'))->render();
@@ -49,6 +50,7 @@ class CategoryDataTable extends DataTable
                     ->columns($this->getColumns())
                     ->minifiedAjax()
                     ->orderBy(1)
+                    ->responsive(true)
                     ->selectStyleSingle()
                     ->buttons([
                         Button::make('excel'),
@@ -57,7 +59,11 @@ class CategoryDataTable extends DataTable
                         Button::make('print'),
                         Button::make('reset'),
                         Button::make('reload')
-                    ]);
+                    ])
+                    ->parameters([
+                        'initComplete' => 'function() { $("#category-table tfoot").remove(); }'
+                    ])
+                    ;
     }
 
     /**
@@ -66,7 +72,14 @@ class CategoryDataTable extends DataTable
     public function getColumns(): array
     {
         return [
-            Column::make('id'),
+            Column::computed('DT_RowIndex')
+            ->title('#')
+            ->searchable(false)
+            ->orderable(false)
+            ->exportable(false)
+            ->printable(true)
+            ->width(30)
+            ->addClass('text-center'),
             Column::make('name'),
             Column::make('status'),
             Column::make('created_at'),

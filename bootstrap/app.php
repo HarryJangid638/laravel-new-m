@@ -1,7 +1,9 @@
 <?php
+use App\Http\Middleware\AuthAny;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+
 // web: [
 //     'uses' => __DIR__.'/../routes/web.php',
 //     'as' => 'front.',
@@ -18,8 +20,11 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->group(base_path('routes/admin.php'));
         }
     )
-    ->withMiddleware(function (Middleware $middleware): void {
-        //
+    ->withMiddleware(function (Middleware $middleware): void 
+    {
+        $middleware->alias([
+            'auth.any'   => AuthAny::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

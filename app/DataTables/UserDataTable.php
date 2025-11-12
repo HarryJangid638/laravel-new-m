@@ -1,5 +1,6 @@
 <?php
 namespace App\DataTables;
+use Carbon\Carbon;
 use App\Models\User;
 use Yajra\DataTables\Html\Button;
 use Yajra\DataTables\Html\Column;
@@ -20,10 +21,15 @@ class UserDataTable extends DataTable
     public function dataTable(QueryBuilder $query): EloquentDataTable
     {
         return (new EloquentDataTable($query))
-            ->addColumn('action', function($user) {
-                return view('admin.users.action', compact('user'))->render();
-            })
-            ->setRowId('id');
+        ->addIndexColumn()
+        ->addColumn('action', function($user) {
+            return view('admin.users.action', compact('user'))->render();
+        })
+        ->editColumn('created_at', function($user)
+        {
+            return Carbon::parse($user->created_at)->format('d/m/Y H:i');
+        })
+        ->setRowId('id');
     }
 
     /**
@@ -46,6 +52,7 @@ class UserDataTable extends DataTable
                     ->columns($this->getColumns())
                     ->minifiedAjax()
                     ->orderBy(1)
+                    ->responsive(true)
                     ->selectStyleSingle()
                     ->buttons([
                         Button::make('excel'),
@@ -54,7 +61,11 @@ class UserDataTable extends DataTable
                         Button::make('print'),
                         Button::make('reset'),
                         Button::make('reload')
-                    ]);
+                    ])
+                    ->parameters([
+                        'initComplete' => 'function() { $("#user-table tfoot").remove(); }'
+                    ])
+                    ;
     }
 
     /**
@@ -63,8 +74,16 @@ class UserDataTable extends DataTable
     public function getColumns(): array
     {
         return [
-            Column::make('id'),
-            Column::make('name'),
+            Column::computed('DT_RowIndex')
+            ->title('#')
+            ->searchable(false)
+            ->orderable(false)
+            ->exportable(false)
+            ->printable(true)
+            ->width(30)
+            ->addClass('text-center'),
+            Column::make('first_name'),
+            Column::make('last_name'),
             Column::make('email'),
             Column::make('created_at'),
             Column::computed('action')

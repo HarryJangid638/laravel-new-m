@@ -1,19 +1,21 @@
 @extends('admin.layouts.index')
 @section('title','Role')
 @section('content')
-    <section class="content-main">
-        <div class="content-header">
-            <div>
-                <h2 class="content-title card-title">Roles</h2>
-            </div>
-        </div>
+    <section class="container-xxl flex-grow-1 container-p-y">
         <div class="card">
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="table-responsive">
-                            {!! $dataTable->table(['id' => 'role-table', 'class' => 'table table-bordered'], true) !!}
-                        </div>
+            <div class="card-header d-flex justify-content-between align-items-center border-bottom bg-primary">
+                <h5 class="content-title card-title mb-0 text-white">
+                    <i class="menu-icon icon-base ri ri-shield-user-line me-1"></i>
+                    Roles
+                </h5>
+                <a href="{{ route('admin.roles.create') }}" class="btn btn-light text-black">
+                    <i class="ri ri-add-line"></i> Add New Role
+                </a>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card-datatable text-nowrap">
+                        {!! $dataTable->table(['id' => 'role-table', 'class' => 'datatables-basic table table-bordered table-responsive'], true) !!}
                     </div>
                 </div>
             </div>

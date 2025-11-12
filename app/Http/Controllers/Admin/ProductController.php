@@ -2,12 +2,13 @@
 namespace App\Http\Controllers\Admin;
 use Throwable;
 use App\Models\Product;
-use Illuminate\Http\Request;
-use App\Traits\HandlesException;
-use App\Traits\JsonResponseTrait;
+use App\Models\Category;
 use App\DataTables\ProductDataTable;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Validator;
+use App\Http\Requests\StoreProductRequest;
+use App\Http\Requests\UpdateProductRequest;
+use App\Traits\JsonResponseTrait;
+use App\Traits\HandlesException;
 
 class ProductController extends Controller
 {
@@ -18,33 +19,26 @@ class ProductController extends Controller
 
     public function index(ProductDataTable $dataTable)
     {
-        return $dataTable->render('admin.products.index');
+        try
+        {
+            if (request()->ajax())
+            {
+                return $dataTable->ajax();
+            }
+            return $dataTable->render('admin.products.index');
+        }
+        catch (Throwable $e)
+        {
+            return self::handleException($e, $this->baseRedirect);
+        }
     }
 
     public function create()
     {
-        return view('admin.products.create');
-    }
-
-    public function store(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string|max:255',
-        ]);
-
-        if ($validator->fails()) {
-            return self::validationError($validator->errors()->toArray());
-        }
-
         try
         {
-            $validated = $validator->validated();
-            $product = Product::create($validated);
-            return self::success([
-                'data' => $product,
-                'message' => 'Product created successfully'
-            ]);
+            $categories = Category::where('parent_id', 0)->pluck('name', 'id');
+            return view('admin.products.create', compact('categories'));
         }
         catch (Throwable $e)
         {
@@ -57,7 +51,8 @@ class ProductController extends Controller
         try
         {
             $product = Product::findOrFail($id);
-            return view('admin.products.edit', compact('product'));
+            $categories = Category::where('parent_id', 0)->pluck('name', 'id');
+            return view('admin.products.edit', compact('product', 'categories'));
         }
         catch (Throwable $e)
         {
@@ -65,21 +60,46 @@ class ProductController extends Controller
         }
     }
 
-    public function update(Request $request, $id)
+    public function store(StoreProductRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string|max:255',
-        ]);
-
-        if ($validator->fails()) {
-            return self::validationError($validator->errors()->toArray());
+        try
+        {
+            $validated = $request->validated();
+            $product = Product::create($validated);
+            return self::success([
+                'data' => $product,
+                'message' => 'Product created successfully'
+            ]);
         }
+        catch (Throwable $e)
+        {
+            return self::handleException($e, $this->baseRedirect);
+        }
+    }
 
+    public function show($id)
+    {
         try
         {
             $product = Product::findOrFail($id);
-            $product->update($request->all());
+            return self::success([
+                'data' => $product,
+                'message' => 'Product fetched successfully'
+            ]);
+        }
+        catch (Throwable $e)
+        {
+            return self::handleException($e, $this->baseRedirect);
+        }
+    }
+
+    public function update(UpdateProductRequest $request, $id)
+    {
+        try
+        {
+            $product = Product::findOrFail($id);
+            $validated = $request->validated();
+            $product->update($validated);
             return self::success([
                 'data' => $product,
                 'message' => 'Product updated successfully'

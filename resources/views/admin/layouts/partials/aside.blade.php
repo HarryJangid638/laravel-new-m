@@ -1,3 +1,6 @@
+@php
+    use App\Enums\Menu;
+@endphp
 <aside id="layout-menu" class="layout-menu menu-vertical menu">
     <div class="app-brand demo">
         <a href="index.html" class="app-brand-link">
@@ -59,101 +62,53 @@
             </svg>
         </a>
     </div>
-
     <div class="menu-inner-shadow"></div>
-
     <ul class="menu-inner py-1">
-        <!-- Dashboards -->
-        <li class="menu-item active open">
-            <a href="javascript:void(0);" class="menu-link menu-toggle">
-                <i class="menu-icon icon-base ri ri-home-smile-line"></i>
-                <div data-i18n="Dashboards">Dashboards</div>
-                <div class="badge badge-center text-bg-danger rounded-pill ms-auto">5</div>
+        <li class="menu-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+            <a href="{{ route('admin.dashboard') }}" class="menu-link">
+                <i class="menu-icon icon-base ri ri-dashboard-line"></i>
+                <div data-i18n="Dashboard">Dashboard</div>
             </a>
-            <ul class="menu-sub">
-                <li class="menu-item">
-                    <a href="app-ecommerce-dashboard.html" class="menu-link">
-                        <div data-i18n="eCommerce">eCommerce</div>
-                    </a>
-                </li>
-                <li class="menu-item active">
-                    <a href="dashboards-crm.html" class="menu-link">
-                        <div data-i18n="CRM">CRM</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="index.html" class="menu-link">
-                        <div data-i18n="Analytics">Analytics</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="app-logistics-dashboard.html" class="menu-link">
-                        <div data-i18n="Logistics">Logistics</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="app-academy-dashboard.html" class="menu-link">
-                        <div data-i18n="Academy">Academy</div>
-                    </a>
-                </li>
-            </ul>
         </li>
+        @foreach(Menu::grouped() as $group => $items)
+             @php
+                // check if user has at least 1 permission in this group
+                $hasPermission = collect($items)->contains(fn($item) =>
+                    auth()->user()->can($item->value . '.view')
+                );
+            @endphp
 
-        <!-- Layouts -->
-        <li class="menu-item">
-            <a href="javascript:void(0);" class="menu-link menu-toggle">
-                <i class="menu-icon icon-base ri ri-layout-2-line"></i>
-                <div data-i18n="Layouts">Layouts</div>
-            </a>
+            @if(!$hasPermission)
+                @continue
+            @endif
 
-            <ul class="menu-sub">
-                <li class="menu-item">
-                    <a href="layouts-collapsed-menu.html" class="menu-link">
-                        <div data-i18n="Collapsed menu">Collapsed menu</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="layouts-content-navbar.html" class="menu-link">
-                        <div data-i18n="Content navbar">Content navbar</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="layouts-content-navbar-with-sidebar.html" class="menu-link">
-                        <div data-i18n="Content nav + Sidebar">Content nav + Sidebar</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="../horizontal-menu-template/" class="menu-link" target="_blank">
-                        <div data-i18n="Horizontal">Horizontal</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="layouts-without-menu.html" class="menu-link">
-                        <div data-i18n="Without menu">Without menu</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="layouts-without-navbar.html" class="menu-link">
-                        <div data-i18n="Without navbar">Without navbar</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="layouts-fluid.html" class="menu-link">
-                        <div data-i18n="Fluid">Fluid</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="layouts-container.html" class="menu-link">
-                        <div data-i18n="Container">Container</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="layouts-blank.html" class="menu-link">
-                        <div data-i18n="Blank">Blank</div>
-                    </a>
-                </li>
-            </ul>
-        </li>
+            <li class="menu-header small text-uppercase">
+                <span class="menu-header-text">{{ $group }}</span>
+            </li>
 
+            @foreach($items as $item)
+
+                @can($item->value . '.view') {{-- permission check --}}
+                    <li class="menu-item {{ request()->url() === $item->route() ? 'active' : '' }}">
+                        <a href="{{ $item->route() }}" class="menu-link"
+                        @if($item === Menu::CLEAR_CACHE)
+                            onclick="event.preventDefault(); if(confirm('Are you sure you want to clear the cache?')){ document.getElementById('clear-cache-form').submit(); }"
+                        @endif
+                        >
+                            <i class="menu-icon icon-base ri {{ $item->icon() }}"></i>
+                            <div data-i18n="{{ $item->label() }}">{{ $item->label() }}</div>
+                        </a>
+
+                        {{-- Hidden form only for Clear Cache --}}
+                        @if($item === Menu::CLEAR_CACHE)
+                            <form id="clear-cache-form" action="{{ $item->route() }}" method="POST" style="display:none;">
+                                @csrf
+                            </form>
+                        @endif
+                    </li>
+                @endcan
+            @endforeach
+        @endforeach
     </ul>
+
 </aside>

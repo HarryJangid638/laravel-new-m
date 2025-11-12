@@ -497,7 +497,7 @@
                             </li>
                             <li class="d-flex align-items-center">
                                 <div class="avatar flex-shrink-0 me-4">
-                                    <img src="../../assets/img/avatars/1.png" alt="avatar" class="rounded-3" />
+                                    <img src="{{ asset('assets/img/avatars/1.png') }}" alt="avatar" class="rounded-3" />
                                 </div>
                                 <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
                                     <div class="me-2">
@@ -873,7 +873,7 @@
                                     <td>
                                         <div class="d-flex align-items-center">
                                             <div class="avatar avatar-sm me-4">
-                                                <img src="../../assets/img/avatars/1.png" alt="Avatar" class="rounded-circle" />
+                                                <img src="{{ asset('assets/img/avatars/1.png') }}" alt="Avatar" class="rounded-circle" />
                                             </div>
                                             <div>
                                                 <h6 class="mb-0 text-truncate">Jordan Stevenson</h6>

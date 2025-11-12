@@ -91,42 +91,35 @@
         </div>
         <!-- Users List Table -->
         <div class="card">
-            <div class="card-header border-bottom">
-                <h5 class="card-title mb-0">Filters</h5>
-                <div class="d-flex justify-content-between align-items-center row gx-5 pt-4 gap-5 gap-md-0">
-                    <div class="col-md-4 user_role"></div>
-                    <div class="col-md-4 user_plan"></div>
-                    <div class="col-md-4 user_status"></div>
-                </div>
+            <div class="card-header d-flex justify-content-between align-items-center border-bottom bg-primary">
+                <h5 class="content-title card-title mb-0 text-white">
+                    <i class="menu-icon icon-base ri ri-group-line me-1"></i>Users
+                </h5>
+                <a href="{{ route('admin.users.create') }}" class="btn btn-light text-black">
+                    <i class="ri ri-add-line"></i> Create User
+                </a>
             </div>
-            <div class="card-datatable">
-                {!! $dataTable->table(['class' => 'datatables-users table table-bordered table-striped', 'style' => 'width:100%'], true) !!}
+            <div class="card-datatable text-nowrap">
+                {!! $dataTable->table(['id' => 'user-table', 'class' => 'table table-bordered table-responsive'], true) !!}
             </div>
-            <!-- Offcanvas to add new user -->
-            <!-- Button to trigger the Show User Offcanvas -->
-            <button type="button" class="btn btn-info mb-3" data-bs-toggle="offcanvas" data-bs-target="#offcanvasShowUser" aria-controls="offcanvasShowUser">
-                Show User Details
-            </button>
-
-            <!-- Dynamic Offcanvas for showing details (usable for any module) -->
-            <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasShowDetails" aria-labelledby="offcanvasShowDetailsLabel">
-                <div class="offcanvas-header border-bottom">
-                    <h5 id="offcanvasShowDetailsLabel" class="offcanvas-title">Details</h5>
-                    <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-                </div>
-                <div class="offcanvas-body mx-0 flex-grow-0 h-100" id="show-details-offcanvas-body">
-                    <!-- Details will be loaded here dynamically via AJAX -->
-                    <div class="text-center py-5" id="show-details-loading" style="display:none;">
-                        <div class="spinner-border text-primary" role="status">
-                          <span class="visually-hidden">Loading...</span>
-                        </div>
-                    </div>
-                    <div id="show-details-content">
-                        <!-- Content will be injected here -->
+        </div>
+        <!-- Dynamic Offcanvas for showing details (usable for any module) -->
+        <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasShowDetails" aria-labelledby="offcanvasShowDetailsLabel">
+            <div class="offcanvas-header border-bottom">
+                <h5 id="offcanvasShowDetailsLabel" class="offcanvas-title">Details</h5>
+                <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body mx-0 flex-grow-0 h-100" id="show-details-offcanvas-body">
+                <!-- Details will be loaded here dynamically via AJAX -->
+                <div class="text-center py-5" id="show-details-loading" style="display:none;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
                     </div>
                 </div>
+                <div id="show-details-content">
+                    <!-- Content will be injected here -->
+                </div>
             </div>
-            <!-- End Dynamic Offcanvas for showing details -->
         </div>
     </div>
     <!-- / Content -->
@@ -142,7 +135,8 @@
                 /**
                  * Show user details in the offcanvas when the view button is clicked.
                  */
-                $(document).on('click', '.btn-show-user', async function(event) {
+                $(document).on('click', '.btn-show-user', async function(event)
+                {
                     event.preventDefault();
 
                     const userId = $(this).data('id');
@@ -158,7 +152,8 @@
                     const offcanvasInstance = bootstrap.Offcanvas.getOrCreateInstance($offcanvas[0]);
                     offcanvasInstance.show();
 
-                    try {
+                    try
+                    {
                         const result = await axiosHelper.apiRequest({
                             url: "{{ route('admin.users.show', ':id') }}".replace(':id', userId),
                             method: 'GET',

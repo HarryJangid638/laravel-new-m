@@ -1,15 +1,10 @@
 <?php
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Admin\RoleController;
-use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\Admin\AdminController;
-use App\Http\Controllers\Admin\SettingController;
-use App\Http\Controllers\Admin\ProductController;
-use App\Http\Controllers\Admin\CategoryController;
-use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\Auth\LoginController;
-use App\Http\Controllers\Admin\SubCategoryController;
+use Illuminate\Support\Facades\Artisan;
+use App\Http\Controllers\Admin\{RoleController, UserController, AdminController, SettingController, ProductController, CategoryController, DashboardController, PermissionController, Auth\LoginController, SubCategoryController, EmailTemplateController, RolePermissionController};
+use App\Http\Controllers\Admin\Auth\ResetPasswordController;
+use App\Http\Controllers\Admin\Auth\ForgotPasswordController;
 
 Route::controller(LoginController::class)->group(function ()
 {
@@ -17,7 +12,24 @@ Route::controller(LoginController::class)->group(function ()
     Route::post('/', 'login')->name('login.submit');
 });
 
-Route::middleware('auth:admin')->group(function ()
+Route::prefix('admin')->group(function () 
+{
+    // Forgot password
+    Route::get('password/reset', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
+    Route::post('password/email', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
+
+    // Reset password
+    Route::get('password/reset/{token}', [ResetPasswordController::class, 'showResetForm'])->name('password.reset');
+    Route::post('password/reset', [ResetPasswordController::class, 'reset'])->name('password.update');
+});
+
+Route::any('/cache/clear', function ()
+{
+    Artisan::call('optimize:clear');
+    return redirect()->back()->with('success', 'Application cache cleared successfully!');
+})->name('cache.clear');
+
+Route::middleware('auth.any')->group(function ()
 {
     Route::prefix('dashboard')->controller(DashboardController::class)->group(function ()
     {
@@ -31,8 +43,13 @@ Route::middleware('auth:admin')->group(function ()
         Route::get('/change-password', 'changePassword')->name('change-password');
     });
 
-
     Route::resource('users', UserController::class);
+    // User change password routes
+    Route::post('users/{user}/change-password', [UserController::class, 'changePassword'])->name('users.change_password.update');
+    
+    // Assign Permission to Users
+    Route::get('users/{user}/assign-permission', [UserController::class, 'assignPermission'])->name('users.assign_permission');
+    Route::post('users/{user}/assign-permission', [UserController::class, 'storePermission'])->name('users.store_permission');
 
     Route::prefix('settings')->controller(SettingController::class)->group(function ()
     {
@@ -40,8 +57,17 @@ Route::middleware('auth:admin')->group(function ()
         Route::post('/', 'update')->name('settings.update');
     });
 
-    Route::resource('roles', RoleController::class);
-    Route::resource('categories', CategoryController::class);
+    // Resource routes
+    Route::resources([
+        'roles' => RoleController::class,
+        'products' => ProductController::class,
+        'categories' => CategoryController::class,
+        'permissions' => PermissionController::class,
+        'email-templates' => EmailTemplateController::class,
+    ]);
+
+    Route::get('role-permissions/{role?}', [RolePermissionController::class, 'index'])->name('role-permissions.index');
+    Route::resource('role-permissions', RolePermissionController::class)->except(['index']);
 
     // SubCategory routes
     Route::prefix('subcategories')->controller(SubCategoryController::class)->group(function ()
@@ -53,8 +79,5 @@ Route::middleware('auth:admin')->group(function ()
         Route::put('/{id}', 'update')->name('subcategories.update');
         Route::delete('/{id}', 'destroy')->name('subcategories.destroy');
     });
-
-    Route::resource('products', ProductController::class);
-
 });
 

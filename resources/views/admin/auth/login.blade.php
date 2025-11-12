@@ -1,7 +1,7 @@
 @extends('admin.layouts.login')
 @section('title','Login')
 @section('content')
-    <div class="position-relative">
+    <div class="position-relative" style="background-image: url('{{ asset('assets/img/elements/28.png') }}'); background-size: cover; background-position: center; min-height: 100vh;">
         <div class="authentication-wrapper authentication-basic container-p-y p-4 p-sm-0">
             <div class="authentication-inner py-6">
                 <!-- Login -->
@@ -84,7 +84,7 @@
                                     html()->checkbox('remember-me')->class('form-check-input')->id('remember-me'),
                                     html()->label('Remember Me')->class('form-check-label')->for('remember-me')
                                 ]),
-                                html()->a()->href('auth-forgot-password-basic.html')->class('float-end mb-1 mt-2')->children([
+                                html()->a()->href(route('admin.password.request'))->class('float-end mb-1 mt-2')->children([
                                     html()->span('Forgot Password?')
                                 ])
                             ]) !!}
@@ -94,35 +94,6 @@
                             ]) !!}
 
                         {!! html()->form()->close() !!}
-
-                        <p class="text-center mb-5">
-                            <span>New on our platform?</span>
-                            <a href="auth-register-basic.html">
-                                <span>Create an account</span>
-                            </a>
-                        </p>
-
-                        <div class="divider my-5">
-                            <div class="divider-text">or</div>
-                        </div>
-
-                        <div class="d-flex justify-content-center gap-2">
-                            <a href="javascript:;" class="btn btn-icon rounded-circle btn-text-facebook">
-                                <i class="icon-base ri ri-facebook-fill icon-18px"></i>
-                            </a>
-
-                            <a href="javascript:;" class="btn btn-icon rounded-circle btn-text-twitter">
-                                <i class="icon-base ri ri-twitter-fill icon-18px"></i>
-                            </a>
-
-                            <a href="javascript:;" class="btn btn-icon rounded-circle btn-text-github">
-                                <i class="icon-base ri ri-github-fill icon-18px"></i>
-                            </a>
-
-                            <a href="javascript:;" class="btn btn-icon btn-lg rounded-pill btn-text-google-plus">
-                                <i class="icon-base ri ri-google-fill icon-18px"></i>
-                            </a>
-                        </div>
                     </div>
                 </div>
                 <!-- /Login -->
@@ -139,45 +110,45 @@
     @push('scripts')
     <script>
         // Prevent page reload on form submit and handle login via AJAX
-        document.addEventListener('DOMContentLoaded', function()
-        {
-            const form = document.getElementById('formAuthentication');
-            if (form)
-            {
-                form.addEventListener('submit', async function(event)
-                {
-                    event.preventDefault(); // Stop normal form submit (prevents page reload)
-                    const email = document.querySelector('#email').value;
-                    const password = document.querySelector('#password').value;
+        document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('formAuthentication');
+        if (form) {
+            form.addEventListener('submit', async function (event) {
+                event.preventDefault(); // Stop normal form submit
 
-                    try
-                    {
-                        const result = await axiosHelper.apiRequest({
-                            url: "{{route('admin.login.submit')}}",
-                            data: { email, password },
-                            method: 'POST',
-                        });
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn.disabled) {
+                    return; // Already clicked once → block double submit
+                }
+                submitBtn.disabled = true; // prevent multiple clicks
 
-                        console.log('Login success:', result);
+                const email = document.querySelector('#email').value;
+                const password = document.querySelector('#password').value;
 
-                        setTimeout(function()
-                        {
-                            window.location.href = "{{route('admin.dashboard')}}";
-                        }, 1000);
-                        toasterAlert('success', result.message);
-                        // Redirect if needed
+                try {
+                    const result = await axiosHelper.apiRequest({
+                        url: "{{ route('admin.login.submit') }}",
+                        data: { email, password },
+                        method: 'POST',
+                    });
 
-                    }
-                    catch (error)
-                    {
+                    console.log('Login success:', result);
 
-                        // toasterAlert('error', result.data.message);
-                        console.error('Login failed:', error);
-                        // Interceptor already shows alert
-                    }
-                });
-            }
-        });
+                    toasterAlert('success', result.message);
+
+                    setTimeout(function () {
+                        window.location.href = "{{ route('admin.dashboard') }}";
+                    }, 1000);
+
+                } catch (error) {
+                    console.error('Login failed:', error);
+                    toasterAlert('error', error.response?.data?.message || 'Login failed');
+                    submitBtn.disabled = false; // re-enable if login failed
+                }
+            });
+        }
+    });
+
 
     </script>
     @endpush

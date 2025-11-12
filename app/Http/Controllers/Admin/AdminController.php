@@ -6,6 +6,7 @@ use PDOException;
 use App\Models\Admin;
 use Illuminate\Http\Request;
 use App\Helpers\FileUploader;
+use App\Events\UserLoggedOut;
 use App\Traits\JsonResponseTrait;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
@@ -85,13 +86,27 @@ class AdminController extends Controller
     {
         try
         {
-            Auth::guard('admin')->logout();
+            // Logout for both admin and user guards
+            $admin = Auth::guard('admin')->user();
+            if ($admin) 
+            {
+                $admin->setRememberToken(null); // Clear the remember token
+                $admin->save(); // Save changes to the database
+                // event(new UserLoggedOut($admin));
+            
+                Auth::guard('admin')->logout();
+            }
 
+            $user = Auth::guard('user')->user();
+            if ($user) {
+                $user->setRememberToken(null); // Clear the remember token
+                $user->save(); // Save changes to the database
+                // event(new UserLoggedOut($user));
+                Auth::guard('user')->logout();
+            }
             $request->session()->invalidate();
             $request->session()->regenerateToken();
-
-            // Fix: Use the correct route name for admin login
-            return redirect()->route('admin.login')->with('success','Logout successfully!');
+            return redirect()->route('admin.login')->withSuccess('you have logout successfully');
         }
         catch (Exception $e)
         {

@@ -22,9 +22,10 @@ class ProductDataTable extends DataTable
     public function dataTable(QueryBuilder $query): EloquentDataTable
     {
         return (new EloquentDataTable($query))
+            ->addIndexColumn()
             ->addColumn('action', function ($product)
             {
-                return view('admin.products.partials.action', compact('product'))->render();
+                return view('admin.products.action', compact('product'))->render();
             })
             ->setRowId('id');
     }
@@ -48,6 +49,7 @@ class ProductDataTable extends DataTable
                     ->setTableId('product-table')
                     ->columns($this->getColumns())
                     ->minifiedAjax()
+                    ->responsive(true)
                     ->orderBy(1)
                     ->selectStyleSingle()
                     ->buttons([
@@ -57,7 +59,11 @@ class ProductDataTable extends DataTable
                         Button::make('print'),
                         Button::make('reset'),
                         Button::make('reload')
-                    ]);
+                    ])
+                    ->parameters([
+                        'initComplete' => 'function() { $("#product-table tfoot").remove(); }'
+                    ])
+                    ;
     }
 
     /**
@@ -66,10 +72,18 @@ class ProductDataTable extends DataTable
     public function getColumns(): array
     {
         return [
-            Column::make('id'),
+            Column::computed('DT_RowIndex')
+            ->title('#')
+            ->searchable(false)
+            ->orderable(false)
+            ->exportable(false)
+            ->printable(true)
+            ->width(30)
+            ->addClass('text-center'),
             Column::make('title'),
-            Column::make('description'),
-            Column::make('status'),
+            Column::make('regular_price'),
+            Column::make('promotional_price'),
+            Column::make('currency'),
             Column::make('created_at'),
             Column::computed('action')
                   ->exportable(false)

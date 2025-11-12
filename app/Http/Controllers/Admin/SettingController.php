@@ -79,7 +79,10 @@ class SettingController extends Controller
                     if($upload)
                     {
                         $setting->uploads()->create($upload);
-                        $getFile->delete();
+                        if($getFile)
+                        {
+                            $getFile->delete();
+                        }
                     }
                 }
             }

@@ -7,7 +7,12 @@ use App\Traits\HandlesException;
 use App\DataTables\RoleDataTable;
 use App\Traits\JsonResponseTrait;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Gate;
+use App\Http\Requests\Role\StoreRequest;
+use App\Http\Requests\Role\UpdateRequest;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Auth\Access\AuthorizationException;
 
 class RoleController extends Controller
 {
@@ -24,11 +29,12 @@ class RoleController extends Controller
     {
         try
         {
-            if (request()->ajax())
-            {
-                return $dataTable->ajax(); // ✅ this returns JSON
-            }
+            Gate::authorize('roles.view');
             return $dataTable->render('admin.roles.index');
+        }
+        catch (AuthorizationException $e)
+        {
+            return to_route('admin.dashboard')->with('warning' , 'You are not authorized to access this resource.');
         }
         catch (Throwable $e)
         {
@@ -40,11 +46,16 @@ class RoleController extends Controller
     {
         try
         {
+            Gate::authorize('roles.add');
             return view('admin.roles.create');
+        }
+        catch (AuthorizationException $e)
+        {
+            return to_route('admin.dashboard')->with('warning' , 'You are not authorized to access this resource.');
         }
         catch (Throwable $e)
         {
-            return self::handleException($e, $this->baseRedirect);
+            return to_route('admin.roles.index')->with('error',$e->getMessage());
         }
     }
 
@@ -52,40 +63,40 @@ class RoleController extends Controller
     {
         try
         {
+            Gate::authorize('roles.edit');
             $role = Role::findOrFail($id);
             return view('admin.roles.edit', compact('role'));
         }
+        catch (AuthorizationException $e)
+        {
+            return to_route('admin.dashboard')->with('warning' , 'You are not authorized to access this resource.');
+        }
         catch (Throwable $e)
         {
-            return self::handleException($e, $this->baseRedirect);
+            return to_route('admin.roles.index')->with('error',$e->getMessage());
         }
     }
 
-    public function store(Request $request)
+    public function store(StoreRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255|unique:roles,name',
-            // Add other fields and rules as needed
-        ]);
-
-        if ($validator->fails()) {
-            return self::validationError($validator->errors()->toArray());
-        }
-
         try
         {
-            $role = Role::create([
-                'name' => $request->name,
-                // Add other fields as needed
-            ]);
-            return self::success([
-                'data' => $role,
-                'message' => 'Role created successfully'
-            ]);
+            Gate::authorize('roles.add');
+            $validated = $request->validated();
+            $role = Role::create($validated);
+            return to_route('admin.roles.index')->with('success', 'Role created successfully.');
+        }
+        catch (AuthorizationException $e)
+        {
+            return to_route('admin.dashboard')->with('warning' , 'You are not authorized to access this resource.');
+        }
+        catch (ValidationException $e)
+        {
+            return back()->withErrors($e->validator->errors())->withInput();
         }
         catch (Throwable $e)
         {
-            return self::handleException($e,$this->baseRedirect);
+            return to_route('admin.roles.index')->with('error',$e->getMessage());
         }
     }
 
@@ -93,11 +104,16 @@ class RoleController extends Controller
     {
         try
         {
+            Gate::authorize('roles.view');
             $role = Role::findOrfail($id);
             return self::success([
                 'data' => $role,
                 'message' => 'Role fetched successfully'
             ]);
+        }
+        catch (AuthorizationException $e)
+        {
+            return to_route('admin.dashboard')->with('warning' , 'You are not authorized to access this resource.');
         }
         catch (Throwable $e)
         {
@@ -105,28 +121,23 @@ class RoleController extends Controller
         }
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateRequest $request, $id)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255|unique:roles,name,' . $id,
-            // Add other fields and rules as needed
-        ]);
-
-        if ($validator->fails()) {
-            return self::validationError($validator->errors()->toArray());
-        }
-
         try
         {
+            Gate::authorize('roles.edit');
             $role = Role::findOrFail($id);
-            $role->update([
-                'name' => $request->name,
-                // Add other fields as needed
-            ]);
-            return self::success([
-                'data' => $role,
-                'message' => 'Role updated successfully'
-            ]);
+            $validated = $request->validated();
+            $role->update($validated);
+            return to_route('admin.roles.index')->with('success', 'Role updated successfully.');
+        }
+        catch (AuthorizationException $e)
+        {
+            return to_route('admin.dashboard')->with('warning' , 'You are not authorized to access this resource.');
+        }
+        catch (ValidationException $e)
+        {
+            return back()->withErrors($e->validator->errors())->withInput();
         }
         catch (Throwable $e)
         {
@@ -138,15 +149,18 @@ class RoleController extends Controller
     {
         try
         {
+            Gate::authorize('roles.delete');
             $role = Role::findOrFail($id);
             $role->delete();
-            return self::success([
-                'message' => 'Role deleted successfully'
-            ]);
+            return to_route('admin.roles.index')->with('success', 'Role deleted successfully.');
         }
-        catch (Throwable $e)
+        catch (AuthorizationException $e)
         {
-            return self::handleException($e,$this->baseRedirect);
+            return to_route('admin.dashboard')->with('warning' , 'You are not authorized to access this resource.');
+        }
+        catch (Exception $e)
+        {
+            return back()->with('error',$e->getMessage());
         }
     }
 }

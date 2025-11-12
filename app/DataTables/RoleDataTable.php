@@ -1,6 +1,6 @@
 <?php
 namespace App\DataTables;
-
+use Carbon\Carbon;
 use App\Models\Role;
 use Yajra\DataTables\Html\Button;
 use Yajra\DataTables\Html\Column;
@@ -20,11 +20,21 @@ class RoleDataTable extends DataTable
     {
         // Use a closure for the action column to avoid view lookup issues
         return (new EloquentDataTable($query))
+            ->addIndexColumn()
             ->addColumn('action', function ($role)
             {
                 return view('admin.roles.partials.action', compact('role'))->render();
             })
-            ->setRowId('id');
+            ->editColumn('created_at', function ($role) {
+                return $role->created_at ? $role->created_at->format('d/m/Y H:i') : '';
+            })
+            ->setRowId('id')
+            ->setRowClass(function ($role) 
+            {
+                // You can use id or loop index to decide
+                return $role->id % 2 === 0 ? 'even' : 'odd';
+            });
+            ;
     }
 
     /**
@@ -44,19 +54,24 @@ class RoleDataTable extends DataTable
     public function html(): HtmlBuilder
     {
         return $this->builder()
-                    ->setTableId('role-table')
-                    ->columns($this->getColumns())
-                    ->minifiedAjax(route('admin.roles.index'))
-                    ->orderBy(1, 'desc') // order by name desc (column index 1)
-                    ->selectStyleSingle()
-                    ->buttons([
-                        Button::make('excel'),
-                        Button::make('csv'),
-                        Button::make('pdf'),
-                        Button::make('print'),
-                        Button::make('reset'),
-                        Button::make('reload')
-                    ]);
+        ->setTableId('role-table')
+        ->columns($this->getColumns())
+        ->minifiedAjax(route('admin.roles.index'))
+        ->responsive(true)
+        ->orderBy(1, 'desc') // order by name desc (column index 1)
+        ->selectStyleSingle()
+        ->buttons([
+            Button::make('excel'),
+            Button::make('csv'),
+            Button::make('pdf'),
+            Button::make('print'),
+            Button::make('reset'),
+            Button::make('reload')
+        ])
+        ->parameters([
+            'initComplete' => 'function() { $("#role-table tfoot").remove(); }'
+        ])
+        ;
     }
 
     /**
@@ -65,14 +80,21 @@ class RoleDataTable extends DataTable
     public function getColumns(): array
     {
         return [
-            Column::make('id'),
+            Column::computed('DT_RowIndex')
+            ->title('#')
+            ->searchable(false)
+            ->orderable(false)
+            ->exportable(false)
+            ->printable(true)
+            ->width(30)
+            ->addClass('text-center'),
             Column::make('name'),
-            Column::make('created_at'),
+            Column::make('created_at')->title('Created'),
             Column::computed('action')
-                  ->exportable(false)
-                  ->printable(false)
-                  ->width(60)
-                  ->addClass('text-center'),
+            ->exportable(false)
+            ->printable(false)
+            ->width(60)
+            ->addClass('text-center'),
         ];
     }
 
